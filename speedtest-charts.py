@@ -18,14 +18,14 @@ parser.add_argument(
 parser.add_argument(
     "-b, --bymonth", action="store_true", default=False,
     dest="bymonth",
-    help='Creats a new sheet for each month named MMM YYYY (ex: Jun 2018)'
+    help='Creates a new sheet for each month named MMM YYYY (ex: Jun 2018)'
 )
 
 cliarg = parser.parse_args()
 
 # Set constants
-DATE = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")
-header = [['A1', 'B1', 'C1', 'D1'], ['Date', 'Download', 'Upload', 'Ping']]
+DATE = datetime.datetime.now().strftime("%d-%m-%y %H:%M:%S")
+header = [['A1', 'B1', 'C1', 'D1'], ['Date (dd-mm-yy)', 'Downloadi (Mbps)', 'Upload (Mbps)', 'Ping (ms)']]
 
 if cliarg.bymonth:
     sheetname = datetime.datetime.now().strftime("%b %Y")
@@ -38,7 +38,7 @@ ping = ''
 
 def get_credentials():
     """Function to check for valid OAuth access tokens."""
-    gc = pygsheets.authorize(outh_file="credentials.json")
+    gc = pygsheets.authorize(client_secret='credentials.json')
     return gc
 
 
@@ -78,9 +78,9 @@ def getresults():
     """Function to generate speedtest result."""
     spdtest = speedtest.Speedtest()
     spdtest.get_best_server()
-    download = round(spdtest.download() / 1000 / 1000, 2)
-    upload = round(spdtest.upload() / 1000 / 1000, 2)
-    ping = round(spdtest.results.ping)
+    download = spdtest.download()
+    upload = spdtest.upload()
+    ping = spdtest.results.ping
 
     return(download, upload, ping)
 
@@ -98,13 +98,14 @@ def main():
     print("Starting speed test...")
     download, upload, ping = getresults()
     print(
-        "Starting speed finished (Download: ", download,
-        ", Upload: ", upload,
-        ", Ping: ", ping, ")")
+        "Starting speed finished (Download: %0.2f" % (download / 1000.0 / 1000.0), "Mbps",
+        ", Upload: %0.2f" % (upload / 1000.0 / 1000.0), "Mbps",
+        ", Ping:", ping, "ms)")
 
     # Write to spreadsheet
     print("Writing to spreadsheet...")
-    submit_into_spreadsheet(download, upload, ping)
+    #submit_into_spreadsheet(download, upload, ping)
+    submit_into_spreadsheet('%0.2f' % (download / 1000.0 / 1000.0), '%0.2f' % (upload / 1000.0 / 1000.0), ping)
     print("Successfuly written to spreadsheet!")
 
 
