@@ -70,7 +70,7 @@ _Note_: If you rather like Grafana than writing to a Google spreadsheet, checkou
       -h, --help            show this help message and exit
       -w, --workbookname WORKBOOKNAME
                         Sets the woorkbook name, default is "Speedtest"
-      -b, --bymonth         Creats a new sheet for each month named MMM YYYY (ex: Jun 2018)
+      -b, --bymonth         Creats a new sheet for each month named MMM YY (ex: Jun 18)
       ```
 
 ### License
