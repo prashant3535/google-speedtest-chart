@@ -18,17 +18,17 @@ parser.add_argument(
 parser.add_argument(
     "-b, --bymonth", action="store_true", default=False,
     dest="bymonth",
-    help='Creates a new sheet for each month named MMM YYYY (ex: Jun 2018)'
+    help='Creates a new sheet for each month named MMM YY (ex: Jun 18)'
 )
 
 cliarg = parser.parse_args()
 
 # Set constants
 DATE = datetime.datetime.now().strftime("%d-%m-%y %H:%M:%S")
-header = [['A1', 'B1', 'C1', 'D1'], ['Date (dd-mm-yy)', 'Downloadi (Mbps)', 'Upload (Mbps)', 'Ping (ms)']]
+header = [['A1', 'B1', 'C1', 'D1'], ['Date (dd-mm-yy)', 'Download (Mbps)', 'Upload (Mbps)', 'Ping (ms)']]
 
 if cliarg.bymonth:
-    sheetname = datetime.datetime.now().strftime("%b %Y")
+    sheetname = datetime.datetime.now().strftime("%b %y")
 
 # set variable scope
 download = ''
