@@ -40,8 +40,8 @@ _Note_: If you rather like Grafana than writing to a Google spreadsheet, checkou
 
 1. Authorization
 
-    1. :book: [Authorize pygsheets](https://pygsheets.readthedocs.io/en/latest/authorizing.html#authorizing-pygsheets)
-    1. :book: [Create an OAuth token](https://pygsheets.readthedocs.io/en/latest/authorizing.html#oauth-credentials), download the credential file and and store it as `credentials.json`
+    1. :book: [Authorize pygsheets](https://pygsheets.readthedocs.io/en/latest/authorization.html#authorizing-pygsheets)
+    1. :book: [Create an OAuth token](https://pygsheets.readthedocs.io/en/latest/authorization.html#oauth-credentials), download the credential file and and store it as `credentials.json`
 
 1. Create a spreadsheet dedicated to collect your speedtest results:  
 
