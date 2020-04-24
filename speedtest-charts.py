@@ -4,6 +4,7 @@ import datetime
 import pygsheets
 import speedtest
 import argparse
+from pygsheets.custom_types import ChartType
 
 # Set options
 parser = argparse.ArgumentParser(
@@ -35,12 +36,10 @@ download = ''
 upload = ''
 ping = ''
 
-
 def get_credentials():
     """Function to check for valid OAuth access tokens."""
     gc = pygsheets.authorize(client_secret='credentials.json')
     return gc
-
 
 def submit_into_spreadsheet(download, upload, ping):
     """Function to submit speedtest result."""
@@ -69,6 +68,7 @@ def submit_into_spreadsheet(download, upload, ping):
             head.value = header[1][index]
             head.update()
     sheet.frozen_rows=1
+    sheet.add_chart(('A1', 'A2'), [('B1','B2'), ('C1','C2'), ('D1','D2')], title='Download (Mbps), Upload (Mbps) and Ping (ms)', chart_type=ChartType.LINE, anchor_cell='E1')
 
     data = [DATE, download, upload, ping]
 
@@ -84,7 +84,6 @@ def getresults():
     ping = spdtest.results.ping
 
     return(download, upload, ping)
-
 
 def main():
     # Check for proper credentials
@@ -108,7 +107,6 @@ def main():
     #submit_into_spreadsheet(download, upload, ping)
     submit_into_spreadsheet('%0.2f' % (download / 1000.0 / 1000.0), '%0.2f' % (upload / 1000.0 / 1000.0), ping)
     print("Successfuly written to spreadsheet!")
-
 
 if __name__ == "__main__":
     main()
