@@ -73,7 +73,7 @@ def submit_into_spreadsheet(download, upload, ping):
     data = [DATE, download, upload, ping]
 
     sheet.append_table(values=data)
-
+    sheet.adjust_column_width(start=1, end=4, pixel_size=None)
 
 def getresults():
     """Function to generate speedtest result."""
