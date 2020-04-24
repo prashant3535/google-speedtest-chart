@@ -68,6 +68,7 @@ def submit_into_spreadsheet(download, upload, ping):
             head = sheet.cell(header[0][index])
             head.value = header[1][index]
             head.update()
+    sheet.frozen_rows=1
 
     data = [DATE, download, upload, ping]
 
