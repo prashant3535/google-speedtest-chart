@@ -67,8 +67,8 @@ def submit_into_spreadsheet(download, upload, ping):
             head = sheet.cell(header[0][index])
             head.value = header[1][index]
             head.update()
-    sheet.frozen_rows=1
-    sheet.add_chart(('A1', 'A2'), [('B1','B2'), ('C1','C2'), ('D1','D2')], title='Download (Mbps), Upload (Mbps) and Ping (ms)', chart_type=ChartType.LINE, anchor_cell='E1')
+        sheet.frozen_rows=1
+        sheet.add_chart(('A1', 'A2'), [('B1','B2'), ('C1','C2'), ('D1','D2')], title='Download (Mbps), Upload (Mbps) and Ping (ms)', chart_type=ChartType.LINE, anchor_cell='E1')
 
     data = [DATE, download, upload, ping]
 
