@@ -4,6 +4,7 @@ import datetime
 import pygsheets
 import speedtest
 import argparse
+
 from pygsheets.custom_types import ChartType
 
 # Set options
@@ -78,6 +79,8 @@ def submit_into_spreadsheet(download, upload, ping):
 def getresults():
     """Function to generate speedtest result."""
     spdtest = speedtest.Speedtest()
+    servers = [INSERT SERVER NUMBER HERE] #speedtest-cli --list
+    spdtest.get_servers(servers)
     spdtest.get_best_server()
     download = spdtest.download()
     upload = spdtest.upload()
