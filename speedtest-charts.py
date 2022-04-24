@@ -2,8 +2,8 @@
 
 import datetime
 import pygsheets
-import speedtest
 import argparse
+import subprocess
 
 from pygsheets.custom_types import ChartType
 
@@ -78,14 +78,11 @@ def submit_into_spreadsheet(download, upload, ping):
 
 def getresults():
     """Function to generate speedtest result."""
-    spdtest = speedtest.Speedtest()
-    servers = [INSERT SERVER NUMBER HERE] #speedtest-cli --list
-    spdtest.get_servers(servers)
-    spdtest.get_best_server()
-    download = spdtest.download()
-    upload = spdtest.upload()
-    ping = spdtest.results.ping
 
+    result = subprocess.run(['/usr/bin/speedtest', '-f', 'csv'], capture_output=True, text=True)
+    download = float(result.stdout.split(',')[7].replace('"',''))
+    upload = float(result.stdout.split(',')[8].replace('"',''))
+    ping = float(result.stdout.split(',')[2].replace('"',''))
     return(download, upload, ping)
 
 def main():
@@ -107,7 +104,6 @@ def main():
 
     # Write to spreadsheet
     print("Writing to spreadsheet...")
-    #submit_into_spreadsheet(download, upload, ping)
     submit_into_spreadsheet('%0.2f' % (download / 1000.0 / 1000.0), '%0.2f' % (upload / 1000.0 / 1000.0), ping)
     print("Successfuly written to spreadsheet!")
 

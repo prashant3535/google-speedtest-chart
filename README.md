@@ -13,7 +13,7 @@ _Note_: If you rather like Grafana than writing to a Google spreadsheet, checkou
 
 * Google account
 * Python 3.X
-* [`speedtest-cli`](https://github.com/sivel/speedtest-cli)
+* [`Speedtest CLI by Ookla team`](https://www.speedtest.net/apps/cli)
 * [`pygsheets`](https://github.com/nithinmurali/pygsheets)
 
 ### Installation and usage
@@ -29,6 +29,11 @@ _Note_: If you rather like Grafana than writing to a Google spreadsheet, checkou
 
     ```
     pip install -r requirements.txt
+
+    # https://www.speedtest.net/apps/cli
+    sudo apt-get install curl
+    curl -s https://install.speedtest.net/app/cli/install.deb.sh | sudo bash
+    sudo apt-get install speedtest
     ```
 
 
@@ -43,7 +48,7 @@ _Note_: If you rather like Grafana than writing to a Google spreadsheet, checkou
     1. :book: [Authorize pygsheets](https://pygsheets.readthedocs.io/en/latest/authorization.html#authorizing-pygsheets)
     1. :book: [Create an OAuth token](https://pygsheets.readthedocs.io/en/latest/authorization.html#oauth-credentials), download the credential file and and store it as `credentials.json`
 
-1. Create a spreadsheet dedicated to collect your speedtest results:  
+1. Create a spreadsheet dedicated to collect your speedtest results:
 
     :book: [docs/Create-a-spreadsheet-to-collect-data.md](docs/Create-a-spreadsheet-to-collect-data.md)
 

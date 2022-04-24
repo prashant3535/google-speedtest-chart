@@ -1,4 +1,4 @@
 oauth2client
 testresources
 pygsheets>=1.1.1
-speedtest-cli
+#speedtest-cli
