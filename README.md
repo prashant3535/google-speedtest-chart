@@ -31,9 +31,14 @@ _Note_: If you rather like Grafana than writing to a Google spreadsheet, checkou
     pip install -r requirements.txt
 
     # https://www.speedtest.net/apps/cli
-    sudo apt-get install curl
-    curl -s https://install.speedtest.net/app/cli/install.deb.sh | sudo bash
-    sudo apt-get install speedtest
+    #curl -s https://install.speedtest.net/app/cli/install.deb.sh | sudo bash
+    #sudo apt-get install speedtest
+    wget https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-x86_64.tgz
+    tar xvf ookla-speedtest-1.2.0-linux-x86_64.tgz
+    sudo mv speedtest /usr/bin/
+
+    sudo apt install python3-pip python3-oauth2client python3-testresources -y
+    pip install -r requirements.txt --break-system-packages
     ```
 
 
