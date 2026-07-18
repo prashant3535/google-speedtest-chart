@@ -21,7 +21,7 @@ _Note_: If you rather like Grafana than writing to a Google spreadsheet, checkou
 1. Clone and open repository:
 
     ```
-    git clone https://github.com/frdmn/google-speedtest-chart.git
+    git clone https://github.com/prashant3535/google-speedtest-chart
     cd google-speedtest-chart
     ```
 

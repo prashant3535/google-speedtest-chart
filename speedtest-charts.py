@@ -89,7 +89,7 @@ def open_worksheet(gc, cliarg):
         try:
             sheet = spreadsheet.worksheet(sheetname)
         except gspread.WorksheetNotFound:
-            sheet = spreadsheet.add_worksheet(sheetname, rows=1000, cols=26)
+            sheet = spreadsheet.add_worksheet(sheetname, rows=1000, cols=26, index=0)
     else:
         sheet = spreadsheet.sheet1
 
