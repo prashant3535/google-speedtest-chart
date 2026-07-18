@@ -33,7 +33,9 @@ _Note_: If you rather like Grafana than writing to a Google spreadsheet, checkou
     tar xvf ookla-speedtest-1.2.0-linux-x86_64.tgz
     sudo mv speedtest /usr/bin/
 
-    pip install -r requirements.txt
+    # pip install -r requirements.txt
+
+    sudo apt install python3-gspread
     ```
 
 1. Symlink it into your `$PATH`:
