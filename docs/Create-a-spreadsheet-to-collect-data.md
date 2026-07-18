@@ -2,7 +2,8 @@
 
 1. Go to the Google Docs dashboard and create a new Spreadsheet using the big green "+" button on the right bottom:  
   ![](http://up.frd.mn/lgMd7.png)
-1. Name the title of the spreadsheet "`Speedtest`", otherwise you can use `SPREADSHEET` environment variable while executing the script to use a different name.
+1. Name the title of the spreadsheet "`Speedtest`", otherwise you can use the `-w` argument while executing the script to use a different name.
+1. Share the spreadsheet (as Editor) with your service account email — the `client_email` value in your `service_account.json` key file.
 1. Fill in the first four columns `Date`, `Download`, `Upload` and `Ping`:  
   ![](http://up.frd.mn/qS5LU.jpg)
 1. Run the `speedtest-to-google` script to make sure it's working:  

@@ -1,111 +1,167 @@
 #!/usr/bin/env python3
+"""Run a speedtest (Ookla Speedtest CLI) and append the result to a Google Sheet."""
 
-import datetime
-import pygsheets
 import argparse
+import datetime
+import json
+import shutil
 import subprocess
+import sys
 
-from pygsheets.custom_types import ChartType
+import gspread
 
-# Set options
-parser = argparse.ArgumentParser(
-    description='Simple Python script to push speedtest results \
-                (using speedtest-cli) to a Google Docs spreadsheet'
-)
-parser.add_argument(
-    "-w, --workbookname", action="store", default="Speedtest", type=str,
-    dest="workbookname",
-    help='Sets the woorkbook name, default is "Speedtest"'
-)
-parser.add_argument(
-    "-b, --bymonth", action="store_true", default=False,
-    dest="bymonth",
-    help='Creates a new sheet for each month named MMM YY (ex: Jun 18)'
-)
+HEADER = ['Date (dd-mm-yy)', 'Download (Mbps)', 'Upload (Mbps)', 'Ping (ms)']
+CHART_TITLE = 'Download (Mbps), Upload (Mbps) and Ping (ms)'
 
-cliarg = parser.parse_args()
 
-# Set constants
-DATE = datetime.datetime.now().strftime("%d-%m-%y %H:%M:%S")
-header = [['A1', 'B1', 'C1', 'D1'], ['Date (dd-mm-yy)', 'Download (Mbps)', 'Upload (Mbps)', 'Ping (ms)']]
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Simple Python script to push speedtest results '
+                    '(using the Ookla Speedtest CLI) to a Google Sheets spreadsheet'
+    )
+    parser.add_argument(
+        '-w', '--workbookname', default='Speedtest',
+        help='Sets the workbook name, default is "Speedtest"'
+    )
+    parser.add_argument(
+        '-b', '--bymonth', action='store_true',
+        help='Creates a new sheet for each month named MMM YY (ex: Jun 18)'
+    )
+    parser.add_argument(
+        '-c', '--credentials', default='service_account.json',
+        help='Path to the Google service account key file, '
+             'default is "service_account.json"'
+    )
+    return parser.parse_args()
 
-if cliarg.bymonth:
-    sheetname = datetime.datetime.now().strftime("%b %y")
 
-# set variable scope
-download = ''
-upload = ''
-ping = ''
-
-def get_credentials():
-    """Function to check for valid OAuth access tokens."""
-    gc = pygsheets.authorize(client_secret='credentials.json')
-    return gc
-
-def submit_into_spreadsheet(download, upload, ping):
-    """Function to submit speedtest result."""
-    gc = get_credentials()
-
+def get_client(credentials_file):
+    """Authenticate against the Google Sheets API with a service account."""
     try:
-        speedtest = gc.open(cliarg.workbookname)
-    except pygsheets.SpreadsheetNotFound:
-        speedtest = gc.create(cliarg.workbookname)
+        return gspread.service_account(filename=credentials_file)
+    except FileNotFoundError:
+        sys.exit(
+            f'Service account key file "{credentials_file}" not found.\n'
+            'Create a service account key in the Google Cloud console and '
+            'save it there, or point to it with --credentials.'
+        )
+
+
+def service_account_email(credentials_file):
+    with open(credentials_file) as f:
+        return json.load(f).get('client_email', '<unknown>')
+
+
+def run_speedtest():
+    """Run the Ookla Speedtest CLI and return (download_mbps, upload_mbps, ping_ms)."""
+    speedtest_bin = shutil.which('speedtest')
+    if speedtest_bin is None:
+        sys.exit('Ookla Speedtest CLI not found in PATH, see '
+                 'https://www.speedtest.net/apps/cli')
+
+    result = subprocess.run(
+        [speedtest_bin, '--format=json'], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        sys.exit(f'speedtest failed: {result.stderr.strip() or result.stdout.strip()}')
+
+    data = json.loads(result.stdout)
+    # The CLI reports bandwidth in bytes/s; convert to megabits/s
+    download = data['download']['bandwidth'] * 8 / 1_000_000
+    upload = data['upload']['bandwidth'] * 8 / 1_000_000
+    ping = data['ping']['latency']
+    return download, upload, ping
+
+
+def open_worksheet(gc, cliarg):
+    """Open the target spreadsheet and (monthly) worksheet."""
+    try:
+        spreadsheet = gc.open(cliarg.workbookname)
+    except gspread.SpreadsheetNotFound:
+        sys.exit(
+            f'Spreadsheet "{cliarg.workbookname}" not found.\n'
+            'Create it in your Google account and share it (Editor) with the '
+            f'service account: {service_account_email(cliarg.credentials)}'
+        )
 
     if cliarg.bymonth:
+        sheetname = datetime.datetime.now().strftime('%b %y')
         try:
-            sheet = speedtest.worksheet('title', sheetname)
-        except pygsheets.WorksheetNotFound:
-            sheet = speedtest.add_worksheet(sheetname)
+            sheet = spreadsheet.worksheet(sheetname)
+        except gspread.WorksheetNotFound:
+            sheet = spreadsheet.add_worksheet(sheetname, rows=1000, cols=26)
     else:
-        sheet = speedtest.sheet1
+        sheet = spreadsheet.sheet1
 
-    headnew = str(sheet.cell('A1').value)
-    headcur = str(header[1][0])
+    return spreadsheet, sheet
 
-    if headnew != headcur:
-        # create header row
-        for index in range(len(header[0])):
-            head = sheet.cell(header[0][index])
-            head.value = header[1][index]
-            head.update()
-        sheet.frozen_rows=1
-        sheet.add_chart(('A1', 'A2'), [('B1','B2'), ('C1','C2'), ('D1','D2')], title='Download (Mbps), Upload (Mbps) and Ping (ms)', chart_type=ChartType.LINE, anchor_cell='E1')
 
-    data = [DATE, download, upload, ping]
+def ensure_header_and_chart(spreadsheet, sheet):
+    """Create the header row and line chart on a fresh sheet."""
+    if sheet.acell('A1').value == HEADER[0]:
+        return
 
-    sheet.append_table(values=data)
-    sheet.adjust_column_width(start=1, end=4, pixel_size=None)
+    sheet.update([HEADER], 'A1:D1')
+    sheet.freeze(rows=1)
 
-def getresults():
-    """Function to generate speedtest result."""
+    def column_range(index):
+        return {'sourceRange': {'sources': [{
+            'sheetId': sheet.id,
+            'startRowIndex': 0,
+            'startColumnIndex': index,
+            'endColumnIndex': index + 1,
+        }]}}
 
-    result = subprocess.run(['/usr/bin/speedtest', '-f', 'csv'], capture_output=True, text=True)
-    download = float(result.stdout.split(',')[7].replace('"',''))
-    upload = float(result.stdout.split(',')[8].replace('"',''))
-    ping = float(result.stdout.split(',')[2].replace('"',''))
-    return(download, upload, ping)
+    spreadsheet.batch_update({'requests': [{'addChart': {'chart': {
+        'spec': {
+            'title': CHART_TITLE,
+            'basicChart': {
+                'chartType': 'LINE',
+                'legendPosition': 'BOTTOM_LEGEND',
+                'headerCount': 1,
+                'domains': [{'domain': column_range(0)}],
+                'series': [
+                    {'series': column_range(column), 'targetAxis': 'LEFT_AXIS'}
+                    for column in (1, 2, 3)
+                ],
+            },
+        },
+        'position': {'overlayPosition': {'anchorCell': {
+            'sheetId': sheet.id,
+            'rowIndex': 0,
+            'columnIndex': 4,
+        }}},
+    }}}]})
+
+
+def submit_into_spreadsheet(gc, cliarg, download, upload, ping):
+    """Append the speedtest result to the spreadsheet."""
+    spreadsheet, sheet = open_worksheet(gc, cliarg)
+    ensure_header_and_chart(spreadsheet, sheet)
+
+    date = datetime.datetime.now().strftime('%d-%m-%y %H:%M:%S')
+    sheet.append_row(
+        [date, round(download, 2), round(upload, 2), round(ping, 2)],
+        value_input_option='USER_ENTERED'
+    )
+    sheet.columns_auto_resize(0, 3)
+
 
 def main():
-    # Check for proper credentials
-    print("Checking OAuth validity...")
-    try:
-        get_credentials()
-    except pygsheets.AuthenticationError:
-        print("Authentication Failed")
-        raise
+    cliarg = parse_args()
 
-    # Run speedtest and store output
-    print("Starting speed test...")
-    download, upload, ping = getresults()
-    print(
-        "Starting speed finished (Download: %0.2f" % (download / 1000.0 / 1000.0), "Mbps",
-        ", Upload: %0.2f" % (upload / 1000.0 / 1000.0), "Mbps",
-        ", Ping:", ping, "ms)")
+    print('Authenticating with Google...')
+    gc = get_client(cliarg.credentials)
 
-    # Write to spreadsheet
-    print("Writing to spreadsheet...")
-    submit_into_spreadsheet('%0.2f' % (download / 1000.0 / 1000.0), '%0.2f' % (upload / 1000.0 / 1000.0), ping)
-    print("Successfuly written to spreadsheet!")
+    print('Starting speed test...')
+    download, upload, ping = run_speedtest()
+    print(f'Speed test finished (Download: {download:.2f} Mbps, '
+          f'Upload: {upload:.2f} Mbps, Ping: {ping:.2f} ms)')
 
-if __name__ == "__main__":
+    print('Writing to spreadsheet...')
+    submit_into_spreadsheet(gc, cliarg, download, upload, ping)
+    print('Successfully written to spreadsheet!')
+
+
+if __name__ == '__main__':
     main()
