@@ -121,7 +121,10 @@ def ensure_header_and_chart(spreadsheet, sheet):
                 'headerCount': 1,
                 'domains': [{'domain': column_range(0)}],
                 'series': [
-                    {'series': column_range(column), 'targetAxis': 'LEFT_AXIS'}
+                    {
+                        'series': {**column_range(column), 'aggregateType': 'AVERAGE'},
+                        'targetAxis': 'LEFT_AXIS',
+                    }
                     for column in (1, 2, 3)
                 ],
             },
